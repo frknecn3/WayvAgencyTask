@@ -47,6 +47,22 @@ export const campaignRouter = router({
       };
     }),
 
+  get: adminProcedure
+    .input(z.object({ id: z.number().int() }))
+    .query(async ({ input }) => {
+      const [campaign] = await db
+        .select()
+        .from(campaigns)
+        .where(eq(campaigns.id, input.id))
+        .limit(1);
+        
+      if (!campaign) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      }
+      
+      return campaign;
+    }),
+
   create: adminProcedure
     .input(campaignCreateSchema)
     .mutation(async ({ input }) => {
