@@ -11,6 +11,7 @@
     "db:studio": "drizzle-kit studio",
     "test": "vitest",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:prod": "dotenv -e .env.production -- drizzle-kit migrate",
     "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
@@ -22,6 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
+    "jose": "^6.2.10",
     "lucide-react": "^1.40.0",
     "next": "16.3.4",
     "postgres": "^3.4.9",
@@ -42,6 +44,7 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.1.1",
     "dotenv": "^17.4.2",
+    "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
