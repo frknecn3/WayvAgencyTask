@@ -2,6 +2,7 @@ import { pgTable, serial, text, timestamp, pgEnum, integer, numeric } from 'driz
 
 export const userRoleEnum = pgEnum('user_role', ['admin', 'creator']);
 export const campaignStatusEnum = pgEnum('campaign_status', ['draft', 'active', 'paused', 'completed']);
+export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'approved', 'rejected']);
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -20,4 +21,16 @@ export const campaigns = pgTable('campaigns', {
   startsAt: timestamp('starts_at').notNull(),
   endsAt: timestamp('ends_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const submissions = pgTable('submissions', {
+  id: serial('id').primaryKey(),
+  campaignId: integer('campaign_id').references(() => campaigns.id).notNull(),
+  creatorId: integer('creator_id').references(() => users.id).notNull(),
+  postUrl: text('post_url').notNull(),
+  platform: text('platform').notNull(),
+  status: submissionStatusEnum('status').default('pending').notNull(),
+  rejectionReason: text('rejection_reason'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
