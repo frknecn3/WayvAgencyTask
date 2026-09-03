@@ -3,7 +3,8 @@ import { router, adminProcedure } from '../trpc';
 import { db } from '@/db/index';
 import { campaigns } from '@/db/schema';
 import { eq, ilike, and, count } from 'drizzle-orm';
-import { statusEnum } from '@/lib/schemas/campaign';
+import { statusEnum, campaignCreateSchema, campaignUpdateSchema } from '@/lib/schemas/campaign';
+import { TRPCError } from '@trpc/server';
 
 export const campaignRouter = router({
   list: adminProcedure
@@ -44,5 +45,55 @@ export const campaignRouter = router({
         items,
         total: countResult.value,
       };
+    }),
+
+  create: adminProcedure
+    .input(campaignCreateSchema)
+    .mutation(async ({ input }) => {
+      const [newCampaign] = await db
+        .insert(campaigns)
+        .values({
+          title: input.title,
+          platforms: input.platforms,
+          payoutPer1kViews: input.payout_per_1k_views.toString(),
+          totalBudget: input.total_budget.toString(),
+          status: input.status,
+          startsAt: input.starts_at,
+          endsAt: input.ends_at,
+        })
+        .returning();
+        
+      return newCampaign;
+    }),
+
+  update: adminProcedure
+    .input(
+      z.object({
+        id: z.number().int(),
+        data: campaignUpdateSchema,
+      })
+    )
+    .mutation(async ({ input }) => {
+      const updateData: Partial<typeof campaigns.$inferInsert> = {};
+      
+      if (input.data.title !== undefined) updateData.title = input.data.title;
+      if (input.data.platforms !== undefined) updateData.platforms = input.data.platforms;
+      if (input.data.payout_per_1k_views !== undefined) updateData.payoutPer1kViews = input.data.payout_per_1k_views.toString();
+      if (input.data.total_budget !== undefined) updateData.totalBudget = input.data.total_budget.toString();
+      if (input.data.status !== undefined) updateData.status = input.data.status;
+      if (input.data.starts_at !== undefined) updateData.startsAt = input.data.starts_at;
+      if (input.data.ends_at !== undefined) updateData.endsAt = input.data.ends_at;
+
+      const [updatedCampaign] = await db
+        .update(campaigns)
+        .set(updateData)
+        .where(eq(campaigns.id, input.id))
+        .returning();
+
+      if (!updatedCampaign) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      }
+
+      return updatedCampaign;
     }),
 });
