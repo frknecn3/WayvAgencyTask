@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, pgEnum, integer, numeric, date, unique } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, pgEnum, integer, numeric, date, unique, index } from 'drizzle-orm/pg-core';
 
 export const userRoleEnum = pgEnum('user_role', ['admin', 'creator']);
 export const campaignStatusEnum = pgEnum('campaign_status', ['draft', 'active', 'paused', 'completed']);
@@ -33,7 +33,10 @@ export const submissions = pgTable('submissions', {
   rejectionReason: text('rejection_reason'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  unique('campaign_post_url_unq').on(table.campaignId, table.postUrl),
+  index('campaign_status_idx').on(table.campaignId, table.status)
+]);
 
 export const submissionMetrics = pgTable('submission_metric', {
   id: serial('id').primaryKey(),
