@@ -72,6 +72,27 @@ export const campaignRouter = router({
       return campaign;
     }),
 
+  getForCreator: creatorProcedure
+    .input(z.object({ id: z.number().int() }))
+    .query(async ({ input }) => {
+      const [campaign] = await db
+        .select()
+        .from(campaigns)
+        .where(
+          and(
+            eq(campaigns.id, input.id),
+            eq(campaigns.status, 'active')
+          )
+        )
+        .limit(1);
+        
+      if (!campaign) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Active campaign not found' });
+      }
+      
+      return campaign;
+    }),
+
   create: adminProcedure
     .input(campaignCreateSchema)
     .mutation(async ({ input }) => {
