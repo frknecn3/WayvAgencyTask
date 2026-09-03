@@ -2,8 +2,9 @@ import { router, creatorProcedure } from '../trpc';
 import { TRPCError } from '@trpc/server';
 import { db } from '@/db/index';
 import { campaigns, submissions } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { submissionCreateSchema } from '@/lib/schemas/submission';
+import { computePayout } from '@/lib/payout';
 
 export const submissionRouter = router({
   create: creatorProcedure
@@ -53,5 +54,50 @@ export const submissionRouter = router({
         }
         throw error; // Rethrow other unexpected errors
       }
+    }),
+
+  mySubmissions: creatorProcedure
+    .query(async ({ ctx }) => {
+      const creatorId = parseInt(ctx.user.id, 10);
+
+      // Using a correlated subquery to get the latest views
+      const latestViewsQuery = sql<number>`(
+        SELECT views 
+        FROM submission_metric 
+        WHERE submission_id = ${submissions.id} 
+        ORDER BY captured_at DESC 
+        LIMIT 1
+      )`;
+
+      const results = await db
+        .select({
+          submission: submissions,
+          campaign: campaigns,
+          latestViews: latestViewsQuery,
+        })
+        .from(submissions)
+        .innerJoin(campaigns, eq(submissions.campaignId, campaigns.id))
+        .where(eq(submissions.creatorId, creatorId));
+
+      return results.map(row => {
+        const views = row.latestViews ?? 0;
+        const ratePer1kCents = Number(row.campaign.payoutPer1kViews);
+        
+        // Estimate earnings using Infinity for the budget (just an estimate, not approval)
+        const payoutResult = computePayout(views, ratePer1kCents, Infinity);
+        const estimatedEarnings = payoutResult.ok ? payoutResult.payoutCents : 0;
+
+        return {
+          id: row.submission.id,
+          postUrl: row.submission.postUrl,
+          platform: row.submission.platform,
+          status: row.submission.status,
+          rejectionReason: row.submission.rejectionReason,
+          createdAt: row.submission.createdAt,
+          campaignTitle: row.campaign.title,
+          latestViews: views,
+          estimatedEarnings,
+        };
+      });
     }),
 });
