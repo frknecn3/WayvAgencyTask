@@ -1,3 +1,5 @@
+
+// tek atımlık pure function (girdigin kadarını verir, para kalmazsa parayı dizer)..
 export function computePayout(
   views: number,
   ratePer1kCents: number,
