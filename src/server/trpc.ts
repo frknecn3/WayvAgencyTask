@@ -6,6 +6,8 @@ import { db } from '@/db/index';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
+// context olusturan kod her trpc isteginde calisiyor
+// tarayicidan auth_token alip db den kullanici buluyor
 export const createContext = async () => {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
@@ -44,8 +46,11 @@ export const t = initTRPC.context<Context>().create({
 });
 
 export const router = t.router;
+
+// public endpoint kim isterse istek atabilir
 export const publicProcedure = t.procedure;
 
+// sadce giris yapmis kişileri iceri alan guvenlik mwsi
 const isAuthed = t.middleware(({ next, ctx }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -57,8 +62,10 @@ const isAuthed = t.middleware(({ next, ctx }) => {
   });
 });
 
+// giris yapmadiysan buraya istek atamazsın
 export const protectedProcedure = t.procedure.use(isAuthed);
 
+// sadece ('admin') girebilir
 export const adminProcedure = protectedProcedure.use(({ next, ctx }) => {
   if (ctx.user.role !== 'admin') {
     throw new TRPCError({ code: 'FORBIDDEN' });
@@ -70,6 +77,7 @@ export const adminProcedure = protectedProcedure.use(({ next, ctx }) => {
   });
 });
 
+// sadece ('creator') iceri girebilir
 export const creatorProcedure = protectedProcedure.use(({ next, ctx }) => {
   if (ctx.user.role !== 'creator') {
     throw new TRPCError({ code: 'FORBIDDEN' });
