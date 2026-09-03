@@ -1,4 +1,4 @@
-import { initTRPC } from '@trpc/server';
+import { initTRPC, TRPCError } from '@trpc/server';
 import superjson from 'superjson';
 import { cookies } from 'next/headers';
 import { verifyUserCookie } from '@/lib/auth';
@@ -45,3 +45,38 @@ export const t = initTRPC.context<Context>().create({
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
+
+const isAuthed = t.middleware(({ next, ctx }) => {
+  if (!ctx.user) {
+    throw new TRPCError({ code: 'UNAUTHORIZED' });
+  }
+  return next({
+    ctx: {
+      user: ctx.user,
+    },
+  });
+});
+
+export const protectedProcedure = t.procedure.use(isAuthed);
+
+export const adminProcedure = protectedProcedure.use(({ next, ctx }) => {
+  if (ctx.user.role !== 'admin') {
+    throw new TRPCError({ code: 'FORBIDDEN' });
+  }
+  return next({
+    ctx: {
+      user: ctx.user,
+    },
+  });
+});
+
+export const creatorProcedure = protectedProcedure.use(({ next, ctx }) => {
+  if (ctx.user.role !== 'creator') {
+    throw new TRPCError({ code: 'FORBIDDEN' });
+  }
+  return next({
+    ctx: {
+      user: ctx.user,
+    },
+  });
+});
