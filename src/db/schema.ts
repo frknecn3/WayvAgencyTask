@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, pgEnum, integer, numeric } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, pgEnum, integer, numeric, date, unique } from 'drizzle-orm/pg-core';
 
 export const userRoleEnum = pgEnum('user_role', ['admin', 'creator']);
 export const campaignStatusEnum = pgEnum('campaign_status', ['draft', 'active', 'paused', 'completed']);
@@ -34,3 +34,17 @@ export const submissions = pgTable('submissions', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+export const submissionMetrics = pgTable('submission_metric', {
+  id: serial('id').primaryKey(),
+  submissionId: integer('submission_id').references(() => submissions.id).notNull(),
+  capturedAt: date('captured_at').notNull(),
+  views: integer('views').notNull(),
+  likes: integer('likes').notNull(),
+  comments: integer('comments').notNull(),
+}, (table) => [
+  unique('submission_metric_unq').on(table.submissionId, table.capturedAt)
+]);
+
+export type SubmissionMetric = typeof submissionMetrics.$inferSelect;
+export type NewSubmissionMetric = typeof submissionMetrics.$inferInsert;
