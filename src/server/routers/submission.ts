@@ -1,8 +1,9 @@
-import { router, creatorProcedure } from '../trpc';
+import { z } from 'zod';
+import { router, creatorProcedure, adminProcedure } from '../trpc';
 import { TRPCError } from '@trpc/server';
 import { db } from '@/db/index';
-import { campaigns, submissions } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { campaigns, submissions, users } from '@/db/schema';
+import { eq, sql, and, asc } from 'drizzle-orm';
 import { submissionCreateSchema } from '@/lib/schemas/submission';
 import { computePayout } from '@/lib/payout';
 
@@ -99,5 +100,31 @@ export const submissionRouter = router({
           estimatedEarnings,
         };
       });
+    }),
+
+  listPending: adminProcedure
+    .input(z.object({ campaign_id: z.coerce.number().int() }))
+    .query(async ({ input }) => {
+      const pendingSubmissions = await db
+        .select({
+          submission: submissions,
+          creator: {
+            email: users.email,
+          },
+        })
+        .from(submissions)
+        .innerJoin(users, eq(submissions.creatorId, users.id))
+        .where(
+          and(
+            eq(submissions.campaignId, input.campaign_id),
+            eq(submissions.status, 'pending')
+          )
+        )
+        .orderBy(asc(submissions.createdAt));
+
+      return pendingSubmissions.map(row => ({
+        ...row.submission,
+        creatorEmail: row.creator.email,
+      }));
     }),
 });
