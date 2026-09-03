@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { router, adminProcedure } from '../trpc';
+import { router, adminProcedure, creatorProcedure } from '../trpc';
 import { db } from '@/db/index';
 import { campaigns } from '@/db/schema';
 import { eq, ilike, and, count } from 'drizzle-orm';
@@ -45,6 +45,15 @@ export const campaignRouter = router({
         items,
         total: countResult.value,
       };
+    }),
+
+  listActive: creatorProcedure
+    .query(async () => {
+      const items = await db
+        .select()
+        .from(campaigns)
+        .where(eq(campaigns.status, 'active'));
+      return items;
     }),
 
   get: adminProcedure
