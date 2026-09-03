@@ -127,4 +127,34 @@ export const submissionRouter = router({
         creatorEmail: row.creator.email,
       }));
     }),
+
+  approve: adminProcedure
+    .input(z.object({ id: z.number().int() }))
+    .mutation(async ({ input }) => {
+      const [submission] = await db
+        .update(submissions)
+        .set({ status: 'approved' })
+        .where(eq(submissions.id, input.id))
+        .returning();
+      
+      if (!submission) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Submission not found' });
+      }
+      return submission;
+    }),
+
+  reject: adminProcedure
+    .input(z.object({ id: z.number().int(), reason: z.string().min(1, "Reason is required") }))
+    .mutation(async ({ input }) => {
+      const [submission] = await db
+        .update(submissions)
+        .set({ status: 'rejected', rejectionReason: input.reason })
+        .where(eq(submissions.id, input.id))
+        .returning();
+        
+      if (!submission) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Submission not found' });
+      }
+      return submission;
+    }),
 });
