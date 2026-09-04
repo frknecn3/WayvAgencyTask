@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { trpc } from '@/trpc/client';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Table,
   TableBody,
@@ -12,7 +15,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +26,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+
+const rejectSchema = z.object({
+  reason: z.string().min(1, 'Reason is required'),
+});
+type RejectInput = z.infer<typeof rejectSchema>;
 
 export default function ReviewQueuePage() {
   const params = useParams();
@@ -45,26 +54,42 @@ export default function ReviewQueuePage() {
     onSuccess: () => {
       toast.success('Submission rejected');
       utils.submission.listPending.invalidate({ campaign_id: campaignId });
-      setRejectDialog({ open: false, submissionId: null, reason: '' });
+      closeRejectDialog();
     },
     onError: (error) => toast.error(error.message)
   });
 
-  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; submissionId: number | null; reason: string }>({
+  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; submissionId: number | null }>({
     open: false,
     submissionId: null,
-    reason: '',
   });
+
+  const form = useForm<RejectInput>({
+    resolver: zodResolver(rejectSchema),
+    defaultValues: {
+      reason: '',
+    },
+  });
+
+  const closeRejectDialog = () => {
+    setRejectDialog({ open: false, submissionId: null });
+    form.reset({ reason: '' });
+  };
+
+  const openRejectDialog = (id: number) => {
+    setRejectDialog({ open: true, submissionId: id });
+    form.reset({ reason: '' });
+  };
 
   const handleApprove = (id: number) => {
     approveMutation.mutate({ id });
   };
 
-  const submitReject = () => {
-    if (rejectDialog.submissionId && rejectDialog.reason.trim()) {
+  const onSubmitReject = (data: RejectInput) => {
+    if (rejectDialog.submissionId) {
       rejectMutation.mutate({ 
         submission_id: rejectDialog.submissionId, 
-        reason: rejectDialog.reason 
+        reason: data.reason 
       });
     }
   };
@@ -124,7 +149,7 @@ export default function ReviewQueuePage() {
                     <Button 
                       variant="destructive" 
                       size="sm"
-                      onClick={() => setRejectDialog({ open: true, submissionId: sub.id, reason: '' })}
+                      onClick={() => openRejectDialog(sub.id)}
                       disabled={approveMutation.isPending || rejectMutation.isPending}
                     >
                       Reject
@@ -139,7 +164,7 @@ export default function ReviewQueuePage() {
 
       <Dialog 
         open={rejectDialog.open} 
-        onOpenChange={(open) => !open && setRejectDialog({ open: false, submissionId: null, reason: '' })}
+        onOpenChange={(open) => !open && closeRejectDialog()}
       >
         <DialogContent>
           <DialogHeader>
@@ -148,24 +173,33 @@ export default function ReviewQueuePage() {
               Provide a reason for rejecting this submission. The creator will see this.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Input 
-              placeholder="e.g. Video is too short, does not mention product..." 
-              value={rejectDialog.reason}
-              onChange={(e) => setRejectDialog({ ...rejectDialog, reason: e.target.value })}
-              autoFocus
-            />
-          </div>
+          <form id="reject-form" onSubmit={form.handleSubmit(onSubmitReject)} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Rejection Reason</Label>
+              <Textarea 
+                placeholder="e.g. Video is too short, does not mention product..." 
+                {...form.register('reason')}
+                className={form.formState.errors.reason ? "border-destructive focus-visible:ring-destructive" : ""}
+                rows={4}
+              />
+              {form.formState.errors.reason && (
+                <p className="text-sm font-medium text-destructive">
+                  {form.formState.errors.reason.message}
+                </p>
+              )}
+            </div>
+          </form>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectDialog({ open: false, submissionId: null, reason: '' })}>
+            <Button variant="outline" type="button" onClick={closeRejectDialog}>
               Cancel
             </Button>
             <Button 
               variant="destructive" 
-              onClick={submitReject} 
-              disabled={!rejectDialog.reason.trim() || rejectMutation.isPending}
+              type="submit"
+              form="reject-form"
+              disabled={rejectMutation.isPending}
             >
-              Confirm Rejection
+              {rejectMutation.isPending ? 'Rejecting...' : 'Confirm Rejection'}
             </Button>
           </DialogFooter>
         </DialogContent>

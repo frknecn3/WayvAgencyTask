@@ -10,9 +10,14 @@ export default function CreatorDashboardPage() {
 
   return (
     <div className="container mx-auto py-10 max-w-5xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Active Campaigns</h1>
-        <p className="text-muted-foreground mt-1">Browse available campaigns and submit your clips to earn payouts.</p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Active Campaigns</h1>
+          <p className="text-muted-foreground mt-1">Browse available campaigns and submit your clips to earn payouts.</p>
+        </div>
+        <Button variant="outline" asChild>
+          <Link href="/creator/submissions">My Submissions</Link>
+        </Button>
       </div>
 
       {isLoading ? (

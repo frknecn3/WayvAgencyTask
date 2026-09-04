@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { trpc } from '@/trpc/client';
 import { keepPreviousData } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -94,18 +96,19 @@ export default function AdminCampaignsPage() {
               <TableHead>Payout / 1k</TableHead>
               <TableHead>Budget</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && !data ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24">
+                <TableCell colSpan={6} className="text-center h-24">
                   Loading campaigns...
                 </TableCell>
               </TableRow>
             ) : data?.items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                   No campaigns found.
                 </TableCell>
               </TableRow>
@@ -125,6 +128,13 @@ export default function AdminCampaignsPage() {
                     `}>
                       {campaign.status}
                     </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/admin/campaigns/${campaign.id}/review`}>
+                        Review Queue
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
