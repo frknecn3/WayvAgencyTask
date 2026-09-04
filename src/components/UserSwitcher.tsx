@@ -11,7 +11,7 @@ export function UserSwitcher({ users, activeUserId }: { users: { id: number; ema
     if (!userId) return;
     startTransition(() => {
       setUserAuthAction(userId).then(() => {
-        window.location.reload();
+        window.location.href = '/';
       });
     });
   };
