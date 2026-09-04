@@ -63,7 +63,7 @@ export default function ReviewQueuePage() {
   const submitReject = () => {
     if (rejectDialog.submissionId && rejectDialog.reason.trim()) {
       rejectMutation.mutate({ 
-        id: rejectDialog.submissionId, 
+        submission_id: rejectDialog.submissionId, 
         reason: rejectDialog.reason 
       });
     }

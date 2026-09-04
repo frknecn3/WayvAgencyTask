@@ -144,12 +144,12 @@ export const submissionRouter = router({
     }),
 
   reject: adminProcedure
-    .input(z.object({ id: z.number().int(), reason: z.string().min(1, "Reason is required") }))
+    .input(z.object({ submission_id: z.coerce.number().int(), reason: z.string().min(1, "Reason is required") }))
     .mutation(async ({ input }) => {
       const [submission] = await db
         .update(submissions)
         .set({ status: 'rejected', rejectionReason: input.reason })
-        .where(eq(submissions.id, input.id))
+        .where(eq(submissions.id, input.submission_id))
         .returning();
         
       if (!submission) {
