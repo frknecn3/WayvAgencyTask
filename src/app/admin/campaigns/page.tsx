@@ -129,10 +129,16 @@ export default function AdminCampaignsPage() {
                       {campaign.status}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right flex items-center justify-end gap-2">
+                    <Link 
+                      href={`/admin/campaigns/${campaign.id}`}
+                      className={buttonVariants({ variant: "secondary", size: "sm" })}
+                    >
+                      Details
+                    </Link>
                     <Link 
                       href={`/admin/campaigns/${campaign.id}/review`}
-                      className={buttonVariants({ variant: "outline", size: "sm" })}
+                      className={buttonVariants({ variant: "default", size: "sm" })}
                     >
                       Review Queue
                     </Link>
