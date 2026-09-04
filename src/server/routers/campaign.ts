@@ -94,8 +94,8 @@ export const campaignRouter = router({
       return campaign;
     }),
 
-  // admin endpointi: yeni kapmanya oluşturur.
-  // toplam büçte ve bin izlenme başına ödeme gibi maddi kuralları ve tarih/platform detaylarını burada belirliyoruz.
+  // admin endpoint: creates a new campaign
+  // we set the financial rules like total budget and payout per 1k views, along with date and platform details here
   create: adminProcedure
     .input(campaignCreateSchema)
     .mutation(async ({ input }) => {
@@ -146,8 +146,8 @@ export const campaignRouter = router({
       return updatedCampaign;
     }),
 
-  // admin endpointi: beliri bir kampanyanın finansal istatistiklerini getirir.
-  // veritabandaki eski/bayat sütunlara güvenmek yerine harcanan bütçeyi ve toplam izlenmeyi anık olarak hesaplıyoruz.
+  // admin endpoint: fetches the financial statistics of a specific campaign
+  // instead of relying on stale database columns, we calculate the spent budget and total views dynamically in real time
   stats: adminProcedure
     .input(z.object({ campaign_id: z.coerce.number().int() }))
     .query(async ({ input }) => {

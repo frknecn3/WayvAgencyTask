@@ -1,7 +1,7 @@
 
-// tek atımlı pure function (girdigin kadarını verir, para kalmazsa parayı dizer)..
-// ana para hasabı burada dönüyor. görüntülenmeye göre tam ne kadar ödeyeceğimizi hesaplıyoruz.
-// tamamen pure functin, yani bütçe yetmiyorsa direkt patlatıp false dönüyor, sürpriz yok.
+// one-shot pure function (returns what you put in, limits if money runs out)
+// core money calculation happens here. we calculate exactly how much to pay based on views
+// completely pure function, if the budget is insufficient it just fails and returns false, no surprises
 export function computePayout(
   views: number,
   ratePer1kCents: number,

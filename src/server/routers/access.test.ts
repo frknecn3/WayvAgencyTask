@@ -12,7 +12,7 @@ describe('submission router - access control', () => {
   it('Creator A calls submission.mySubmissions and sees only their own submissions', async () => {
     const timestamp = Date.now();
 
-    // Seed two creators
+    // seed two creators
     const [creatorA] = await db.insert(users).values({
       email: `creator-A-${timestamp}@example.com`,
       role: 'creator',
@@ -23,7 +23,7 @@ describe('submission router - access control', () => {
       role: 'creator',
     }).returning();
 
-    // Seed a campaign
+    // seed a campaign
     const [campaign] = await db.insert(campaigns).values({
       title: 'Access Control Campaign',
       platforms: ['tiktok'],
@@ -34,7 +34,7 @@ describe('submission router - access control', () => {
       endsAt: new Date(Date.now() + 86400000),
     }).returning();
 
-    // Seed submission for Creator A
+    // seed submission for creator a
     await db.insert(submissions).values({
       campaignId: campaign.id,
       creatorId: creatorA.id,
@@ -43,7 +43,7 @@ describe('submission router - access control', () => {
       status: 'pending',
     });
 
-    // Seed submission for Creator B
+    // seed submission for creator b
     await db.insert(submissions).values({
       campaignId: campaign.id,
       creatorId: creatorB.id,
@@ -52,19 +52,19 @@ describe('submission router - access control', () => {
       status: 'pending',
     });
 
-    // Create caller for Creator A
+    // create caller for creator a
     const callerA = createCaller({
       user: { id: creatorA.id.toString(), email: creatorA.email, role: 'creator' }
     });
 
-    // Call mySubmissions
+    // call mysubmissions
     const result = await callerA.mySubmissions();
 
-    // Assert isolation
+    // assert isolation
     expect(result.length).toBe(1);
     expect(result[0].postUrl).toContain('@usera');
 
-    // Clean up
+    // clean up
     await db.delete(submissions).where(eq(submissions.campaignId, campaign.id));
     await db.delete(campaigns).where(eq(campaigns.id, campaign.id));
     await db.delete(users).where(eq(users.id, creatorA.id));
@@ -82,7 +82,7 @@ describe('submission router - access control', () => {
   });
 
   it('Unauthenticated call to protectedProcedure -> gets UNAUTHORIZED', async () => {
-    // Unauthenticated context (user is null)
+    // unauthenticated context (user is null)
     const caller = createCaller({
       user: null
     });

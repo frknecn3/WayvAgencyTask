@@ -10,16 +10,16 @@ describe('Ingest Script Integration Tests', () => {
   let subB: number;
 
   beforeEach(async () => {
-    // Setup initial data for each test manually without transaction
+    // setup initial data for each test manually without transaction
     const timestamp = Date.now();
     
-    // Seed user
+    // seed user
     const [user] = await db.insert(users).values({
       email: `ingest-test-${timestamp}@example.com`,
       role: 'creator',
     }).returning();
 
-    // Seed campaign
+    // seed campaign
     const [campaign] = await db.insert(campaigns).values({
       title: 'Ingest Test Campaign',
       platforms: ['tiktok'],
@@ -31,7 +31,7 @@ describe('Ingest Script Integration Tests', () => {
     }).returning();
     testCampaignId = campaign.id;
 
-    // Seed 2 approved submissions
+    // seed 2 approved submissions
     const [s1] = await db.insert(submissions).values({
       campaignId: campaign.id,
       creatorId: user.id,
@@ -61,14 +61,14 @@ describe('Ingest Script Integration Tests', () => {
   });
 
   it('idempotency: running ingest twice does not duplicate rows and increases metrics', async () => {
-    // Run 1
+    // run 1
     await runIngest();
     
     const run1Metrics = await db.select().from(submissionMetrics).where(eq(submissionMetrics.submissionId, subA));
     expect(run1Metrics.length).toBe(1);
     const run1Views = run1Metrics[0].views;
     
-    // Run 2
+    // run 2
     await runIngest();
     
     const run2Metrics = await db.select().from(submissionMetrics).where(eq(submissionMetrics.submissionId, subA));
@@ -77,42 +77,42 @@ describe('Ingest Script Integration Tests', () => {
   });
 
   it('views only go up: mock returning lower views preserves the greatest value', async () => {
-    // Run 1 normally
+    // run 1 normally
     await runIngest();
     
-    // Update DB directly to set a high value
+    // update db directly to set a high value
     await db.update(submissionMetrics)
       .set({ views: 1000000 })
       .where(eq(submissionMetrics.submissionId, subA));
 
-    // Run 2 with mock returning lower views
+    // run 2 with mock returning lower views
     process.env.SIMULATE_LOWER_VIEWS = '1';
     await runIngest();
     
     const metrics = await db.select().from(submissionMetrics).where(eq(submissionMetrics.submissionId, subA));
     
-    // Views should NOT have decreased
+    // views should not have decreased
     expect(metrics[0].views).toBe(1000000); 
   });
 
   it('fault isolation: one failure does not stop others and is reported', async () => {
-    // Force the ingest loop to throw on index 0
+    // force the ingest loop to throw on index 0
     process.env.SIMULATE_FAILURE = '1';
     
     const { results, failures } = await runIngest();
     
-    // Exactly 1 failure reported
+    // exactly 1 failure reported
     expect(failures.length).toBe(1);
     
-    // Other submissions succeeded
+    // other submissions succeeded
     const successes = results.filter(r => r.status === 'fulfilled');
     expect(successes.length).toBeGreaterThan(0);
     
-    // Verify in DB that at least one of our test submissions got written
+    // verify in db that at least one of our test submissions got written
     // (If subA was index 0, it failed, but subB should succeed. If a global sub was index 0, both subA and subB succeed)
     const testMetrics = await db.select().from(submissionMetrics).where(inArray(submissionMetrics.submissionId, [subA, subB]));
     
-    // At least one succeeded
+    // at least one succeeded
     expect(testMetrics.length).toBeGreaterThanOrEqual(1);
   });
 });

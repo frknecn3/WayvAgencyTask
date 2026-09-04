@@ -2,8 +2,8 @@ import { campaigns, submissions, submissionMetrics } from '@/db/schema';
 import { eq, sql, and, desc } from 'drizzle-orm';
 import { computePayout } from '@/lib/payout';
 
-// kapanyanın o anki toplam harcamasını ve izlenmesini onaylanmış submissionlar üzerinden hesaplar.
-// bütçe kontrolü yaparken veritabanını kiltlediğimizde (transaction içinde) gerçek zamanlı sınırı bulmak için bunu çağırıyoruz.
+// calculates the current total spend and views of the campaign based on approved submissions
+// we call this to find the real-time limit when we lock the database (inside a transaction) for budget control
 export async function computeCampaignSpend(tx: any, campaignId: number): Promise<{ spend: number; views: number }> {
   const approvedSubmissions = await tx
     .select({
@@ -32,8 +32,8 @@ export async function computeCampaignSpend(tx: any, campaignId: number): Promise
     const views = sub.latestViews ?? 0;
     totalViews += views;
     const rate = sub.payoutPer1k;
-    // burada bütçe limtine infinity geçiyoruz çünkü sadece geçmişte onaylananların toplam maliyetini topluyoruz,
-    // yani bu adımda yeni bir bütçe sinırı falan uygulamıyoruz.
+    // we pass infinity to the budget limit here because we are only summing the total cost of past approved submissions,
+    // so we aren't applying any new budget limits at this step
     const payoutResult = computePayout(views, rate, Infinity);
     if (payoutResult.ok) {
       currentSpend += payoutResult.payoutCents;

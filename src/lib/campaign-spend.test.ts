@@ -5,7 +5,7 @@ import { computeCampaignSpend } from './campaign-spend';
 
 describe('campaign-spend integration', () => {
   it('computes correct spend for approved submissions only', async () => {
-    // Run everything in a transaction and rollback at the end to keep DB clean
+    // run everything in a transaction and rollback at the end to keep db clean
     await db.transaction(async (tx) => {
       // 1. Create a user
       const [user] = await tx.insert(users).values({
@@ -33,7 +33,7 @@ describe('campaign-spend integration', () => {
         status: 'approved',
       }).returning();
 
-      // Insert metric A (1500 views -> 1k payable -> 500 cents)
+      // insert metric a (1500 views -> 1k payable -> 500 cents)
       await tx.insert(submissionMetrics).values({
         submissionId: subA.id,
         views: 1500,
@@ -51,7 +51,7 @@ describe('campaign-spend integration', () => {
         status: 'approved',
       }).returning();
 
-      // Insert older metric for B (should be ignored)
+      // insert older metric for b (should be ignored)
       await tx.insert(submissionMetrics).values({
         submissionId: subB.id,
         views: 2000,
@@ -59,7 +59,7 @@ describe('campaign-spend integration', () => {
         comments: 10,
         capturedAt: new Date(Date.now() - 86400000).toISOString().split('T')[0],
       });
-      // Insert latest metric for B (3200 views -> 3k payable -> 1500 cents)
+      // insert latest metric for b (3200 views -> 3k payable -> 1500 cents)
       await tx.insert(submissionMetrics).values({
         submissionId: subB.id,
         views: 3200,
@@ -88,14 +88,14 @@ describe('campaign-spend integration', () => {
       // 6. Compute spend!
       const { spend, views } = await computeCampaignSpend(tx, campaign.id);
       
-      // Expected: subA (500 cents) + subB (1500 cents) = 2000 cents total
+      // expected: suba (500 cents) + subb (1500 cents) = 2000 cents total
       expect(spend).toBe(2000);
       expect(views).toBe(4700);
 
-      // Rollback to keep DB clean
+      // rollback to keep db clean
       tx.rollback();
     }).catch(e => {
-      // Ignore the expected Drizzle rollback error
+      // ignore the expected drizzle rollback error
       if (!e.message.includes('Rollback')) {
         throw e;
       }

@@ -23,7 +23,7 @@ export function CampaignForm({ initialData, id }: { initialData?: any; id?: numb
       payout_per_1k_views: initialData.payoutPer1kViews,
       total_budget: initialData.totalBudget,
       status: initialData.status,
-      // Map JS dates to YYYY-MM-DDThh:mm strings required by datetime-local inputs
+      // map js dates to yyyy-mm-ddthh:mm strings required by datetime-local inputs
       starts_at: new Date(initialData.startsAt).toISOString().slice(0, 16) as unknown as Date,
       ends_at: new Date(initialData.endsAt).toISOString().slice(0, 16) as unknown as Date,
     } : {

@@ -38,13 +38,13 @@ export default function AdminCampaignsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [status, setStatus] = useState<CampaignStatus>(undefined);
 
-  // Debounce search input to avoid spamming the database
+  // debounce search input to avoid spamming the database
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Reset to first page when search query or status filter changes
+  // reset to first page when search query or status filter changes
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, status]);

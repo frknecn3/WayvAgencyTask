@@ -5,7 +5,7 @@ import { users, campaigns } from '../src/db/schema';
 async function main() {
   console.log('Seeding database...');
 
-  // Seed Users idempotently
+  // seed users idempotently
   await db.insert(users).values([
     {
       email: 'admin@example.com',
@@ -19,7 +19,7 @@ async function main() {
 
   console.log('Users seeded.');
 
-  // Check if campaigns already exist to make it idempotent
+  // check if campaigns already exist to make it idempotent
   const existingCampaigns = await db.select().from(campaigns).limit(1);
   
   if (existingCampaigns.length === 0) {

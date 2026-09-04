@@ -12,7 +12,7 @@ export const submissionRouter = router({
   create: creatorProcedure
     .input(submissionCreateSchema)
     .mutation(async ({ input, ctx }) => {
-      // 1. Verify campaign exists and is active
+      // step 1: verify campaign exists and is active
       const [campaign] = await db
         .select()
         .from(campaigns)
@@ -27,12 +27,12 @@ export const submissionRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Campaign is not active' });
       }
 
-      // 2. Verify submission platform is one of the campaign's platforms
+      // step 2: verify submission platform is one of the campaign's platforms
       if (!campaign.platforms?.includes(input.platform)) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Platform not supported by this campaign' });
       }
 
-      // 3. Insert with status pending and catch Postgres unique violation (23505)
+      // step 3: insert with status pending and catch postgres unique violation (23505)
       try {
         const [submission] = await db
           .insert(submissions)
@@ -47,14 +47,14 @@ export const submissionRouter = router({
 
         return submission;
       } catch (error: any) {
-        // Postgres unique violation code is 23505
+        // postgres unique violation code is 23505
         if (error.code === '23505') {
           throw new TRPCError({
             code: 'CONFLICT',
             message: 'This URL has already been submitted to this campaign.',
           });
         }
-        throw error; // Rethrow other unexpected errors
+        throw error; // rethrow other unexpected errors
       }
     }),
 
@@ -62,7 +62,7 @@ export const submissionRouter = router({
     .query(async ({ ctx }) => {
       const creatorId = parseInt(ctx.user.id, 10);
 
-      // Using a correlated subquery to get the latest views
+      // using a correlated subquery to get the latest views
       const latestViewsQuery = sql<number>`(
         SELECT views 
         FROM submission_metric 
@@ -85,7 +85,7 @@ export const submissionRouter = router({
         const views = row.latestViews ?? 0;
         const ratePer1kCents = Number(row.campaign.payoutPer1kViews);
         
-        // Estimate earnings using Infinity for the budget (just an estimate, not approval)
+        // estimate earnings using infinity for the budget (just an estimate, not approval)
         const payoutResult = computePayout(views, ratePer1kCents, Infinity);
         const estimatedEarnings = payoutResult.ok ? payoutResult.payoutCents : 0;
 
@@ -129,16 +129,16 @@ export const submissionRouter = router({
       }));
     }),
 
-  // admin endpinti: içerik üreticisinin gönderisini onaylar.
-  // bu kısım çok kritik çünkü para mezvusu dönüyor. kampanyanın güncel harcamasını dinamik hesaplayıp,
-  // bu yeni onayın tolpam bütçeyi kesinlikle aşmayacağından emin oluyoruz.
+  // admin endpoint: approves the creator's submission
+  // this is very critical because money is involved. we calculate the current campaign spend dynamically,
+  // ensuring this new approval absolutely does not exceed the total budget
   approve: adminProcedure
     .input(z.object({ submission_id: z.coerce.number().int(), campaign_id: z.coerce.number().int() }))
     .mutation(async ({ input }) => {
       return await db.transaction(async (tx) => {
-        // 1. kampanya satırnı kilitliyoruz.
-        // select for update ile satırı fizksel olarak kilitliyoruz ki aynı anda gelen onay istekleri sıraya girsin.
-        // bylece aynı anda iki admin onay verirse bütçenin eksiye düşmesi (race condition) gibi saçmalıkları engelliyoruz.
+        // step 1: lock the campaign row
+        // we physically lock the row with select for update so that concurrent approval requests are queued
+        // this prevents absurd race conditions like the budget dropping below zero if two admins approve at the same time
         const [campaign] = await tx
           .select()
           .from(campaigns)
@@ -158,13 +158,13 @@ export const submissionRouter = router({
         const latestMetric = await getLatestMetric(tx, input.submission_id);
         const views = latestMetric?.views ?? 0;
 
-        // 4. payut fonksiyonunu çağırıp bütçe kontrolü yapıyoruz.
-        // bu izlenmerin maliyeti kalan bütçeye uyuyor mu diye net bir hesap yapıyoruz.
+        // step 4: call the payout function and perform budget control
+        // we make a strict calculation to see if the cost of these views fits the remaining budget
         const ratePer1k = campaign.payoutPer1kViews;
         const result = computePayout(views, ratePer1k, remainingBudget);
 
         if (!result.ok) {
-          // eger ok false dönerse, bu gönderinin maliyeti kalan bütçeyi matamatiksel olarak aşıyor demektir, direkt reddediyoruz.
+          // if ok is false, the cost of this submission mathematically exceeds the remaining budget, so we reject it directly
           throw new TRPCError({
             code: 'PRECONDITION_FAILED',
             message: 'Approval would exceed campaign budget',

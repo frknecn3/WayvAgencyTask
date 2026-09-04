@@ -11,7 +11,7 @@ function mockFetchMetrics(
   prevComments: number
 ) {
   if (process.env.SIMULATE_FAILURE === '1' && submissionId === 4) { // Hardcoding 4 or checking a condition
-    // For general testing we will just fail on the first call if env var is set
+    // for general testing we will just fail on the first call if env var is set
     throw new Error(`Simulated failure fetching metrics for ${postUrl}`);
   }
   
@@ -19,9 +19,9 @@ function mockFetchMetrics(
     return { views: 10, likes: 1, comments: 1 };
   }
 
-  // Random increment 100-5000 views
+  // random increment 100-5000 views
   const viewInc = Math.floor(Math.random() * 4901) + 100;
-  // Likes ~10% of views, comments ~1% of views roughly
+  // likes ~10% of views, comments ~1% of views roughly
   const likeInc = Math.floor(viewInc * (Math.random() * 0.15 + 0.05));
   const commentInc = Math.floor(viewInc * (Math.random() * 0.02 + 0.005));
   
@@ -42,14 +42,14 @@ export async function runIngest() {
 
   console.log(`Found ${approvedSubmissions.length} approved submissions to process.`);
 
-  // Use today's date formatted as YYYY-MM-DD
+  // use today's date formatted as yyyy-mm-dd
   const today = new Date().toISOString().split('T')[0];
 
   const promises = approvedSubmissions.map(async (sub, index) => {
-    // Determine which ID to fail if simulating, use the first submission's ID
+    // determine which id to fail if simulating, use the first submission's id
     const shouldFail = process.env.SIMULATE_FAILURE === '1' && index === 0;
 
-    // Get latest metric to feed to the mock
+    // get latest metric to feed to the mock
     const [latest] = await db
       .select()
       .from(submissionMetrics)
@@ -69,7 +69,7 @@ export async function runIngest() {
 
     console.log(`[ID: ${sub.id}] Fetched: ${views} views (+${views - prevViews}) from ${sub.platform}`);
 
-    // Upsert the metric using GREATEST to ensure metrics never decrease
+    // upsert the metric using greatest to ensure metrics never decrease
     await db.insert(submissionMetrics)
       .values({ 
         submissionId: sub.id, 
@@ -102,7 +102,7 @@ export async function runIngest() {
   return { results, failures };
 }
 
-// Only run automatically if executed directly (not imported in tests)
+// only run automatically if executed directly (not imported in tests)
 if (require.main === module || process.argv[1].endsWith('ingest.ts')) {
   runIngest()
     .then(() => client.end())
