@@ -14,6 +14,10 @@ function mockFetchMetrics(
     // For general testing we will just fail on the first call if env var is set
     throw new Error(`Simulated failure fetching metrics for ${postUrl}`);
   }
+  
+  if (process.env.SIMULATE_LOWER_VIEWS === '1') {
+    return { views: 10, likes: 1, comments: 1 };
+  }
 
   // Random increment 100-5000 views
   const viewInc = Math.floor(Math.random() * 4901) + 100;
@@ -28,7 +32,7 @@ function mockFetchMetrics(
   };
 }
 
-async function main() {
+export async function runIngest() {
   console.log('🚀 Starting metric ingestion process...');
 
   const approvedSubmissions = await db
@@ -95,10 +99,15 @@ async function main() {
     console.log(`\nIngest completed successfully. ${results.length} submissions processed.`);
   }
   
-  await client.end();
+  return { results, failures };
 }
 
-main().catch((err) => {
-  console.error('❌ Ingestion failed:', err);
-  process.exit(1);
-});
+// Only run automatically if executed directly (not imported in tests)
+if (require.main === module || process.argv[1].endsWith('ingest.ts')) {
+  runIngest()
+    .then(() => client.end())
+    .catch((err) => {
+      console.error('❌ Ingestion failed:', err);
+      process.exit(1);
+    });
+}
