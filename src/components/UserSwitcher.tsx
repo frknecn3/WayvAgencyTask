@@ -16,9 +16,7 @@ export function UserSwitcher({ users, activeUserId }: { users: { id: number; ema
     });
   };
 
-  if (process.env.NODE_ENV !== 'development') {
-    return null;
-  }
+
 
   return (
     <div className="flex items-center gap-2">
