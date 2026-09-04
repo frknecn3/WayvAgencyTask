@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { router, adminProcedure, creatorProcedure } from '../trpc';
 import { db } from '@/db/index';
 import { campaigns } from '@/db/schema';
-import { eq, ilike, and, count } from 'drizzle-orm';
+import { eq, ilike, and, count, sql } from 'drizzle-orm';
 import { statusEnum, campaignCreateSchema, campaignUpdateSchema } from '@/lib/schemas/campaign';
 import { computeCampaignSpend } from '@/lib/campaign-spend';
 import { TRPCError } from '@trpc/server';
@@ -166,5 +166,24 @@ export const campaignRouter = router({
         budgetSpent,
         budgetLeft,
       };
+    }),
+
+  dailyViews: adminProcedure
+    .input(z.object({ campaign_id: z.coerce.number().int() }))
+    .query(async ({ input }) => {
+      const results = await db.execute(sql`
+        SELECT d.date::date::text as date, COALESCE(SUM(sm.views), 0)::int as views
+        FROM generate_series(
+          (SELECT starts_at FROM campaigns WHERE id = ${input.campaign_id}),
+          (SELECT ends_at FROM campaigns WHERE id = ${input.campaign_id}),
+          '1 day'::interval
+        ) AS d(date)
+        LEFT JOIN submissions s ON s.campaign_id = ${input.campaign_id} AND s.status = 'approved'
+        LEFT JOIN submission_metric sm ON sm.submission_id = s.id AND sm.captured_at = d.date::date
+        GROUP BY d.date
+        ORDER BY d.date;
+      `);
+      
+      return results as unknown as { date: string, views: number }[];
     }),
 });

@@ -12,7 +12,8 @@
     "test": "vitest",
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:prod": "dotenv -e .env.production -- drizzle-kit migrate",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "ingest": "tsx scripts/ingest.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -32,6 +33,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.87.0",
+    "recharts": "^3.10.1",
     "shadcn": "^4.20.1",
     "sonner": "^2.0.8",
     "superjson": "^2.2.6",
