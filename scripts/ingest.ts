@@ -4,11 +4,17 @@ import { submissions, submissionMetrics } from '../src/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 
 function mockFetchMetrics(
+  submissionId: number,
   postUrl: string, 
   prevViews: number, 
   prevLikes: number, 
   prevComments: number
 ) {
+  if (process.env.SIMULATE_FAILURE === '1' && submissionId === 4) { // Hardcoding 4 or checking a condition
+    // For general testing we will just fail on the first call if env var is set
+    throw new Error(`Simulated failure fetching metrics for ${postUrl}`);
+  }
+
   // Random increment 100-5000 views
   const viewInc = Math.floor(Math.random() * 4901) + 100;
   // Likes ~10% of views, comments ~1% of views roughly
@@ -35,7 +41,10 @@ async function main() {
   // Use today's date formatted as YYYY-MM-DD
   const today = new Date().toISOString().split('T')[0];
 
-  for (const sub of approvedSubmissions) {
+  const promises = approvedSubmissions.map(async (sub, index) => {
+    // Determine which ID to fail if simulating, use the first submission's ID
+    const shouldFail = process.env.SIMULATE_FAILURE === '1' && index === 0;
+
     // Get latest metric to feed to the mock
     const [latest] = await db
       .select()
@@ -48,7 +57,11 @@ async function main() {
     const prevLikes = latest?.likes ?? 0;
     const prevComments = latest?.comments ?? 0;
 
-    const { views, likes, comments } = mockFetchMetrics(sub.postUrl, prevViews, prevLikes, prevComments);
+    if (shouldFail) {
+      throw new Error(`Simulated fetch timeout for ${sub.postUrl}`);
+    }
+
+    const { views, likes, comments } = mockFetchMetrics(sub.id, sub.postUrl, prevViews, prevLikes, prevComments);
 
     console.log(`[ID: ${sub.id}] Fetched: ${views} views (+${views - prevViews}) from ${sub.platform}`);
 
@@ -69,9 +82,18 @@ async function main() {
           comments: sql`GREATEST(${submissionMetrics.comments}, ${comments})`,
         },
       });
-  }
+  });
 
-  console.log('✅ Ingestion complete.');
+  const results = await Promise.allSettled(promises);
+  const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+  
+  if (failures.length > 0) {
+    console.error(`\nIngest completed with ${failures.length} failure(s):`);
+    failures.forEach((f, i) => console.error(`  ${i + 1}. ${f.reason}`));
+    process.exitCode = 1;
+  } else {
+    console.log(`\nIngest completed successfully. ${results.length} submissions processed.`);
+  }
   
   await client.end();
 }
