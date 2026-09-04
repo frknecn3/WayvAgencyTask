@@ -15,7 +15,7 @@ const PLATFORMS = ['tiktok', 'instagram', 'youtube'] as const;
 export function CampaignForm({ initialData, id }: { initialData?: any; id?: number }) {
   const router = useRouter();
 
-  const form = useForm<CampaignCreateInput>({
+  const form = useForm<any>({
     resolver: zodResolver(campaignCreateSchema),
     defaultValues: initialData ? {
       title: initialData.title,
@@ -53,7 +53,7 @@ export function CampaignForm({ initialData, id }: { initialData?: any; id?: numb
     },
   });
 
-  const onSubmit = (data: CampaignCreateInput) => {
+  const onSubmit = (data: any) => {
     if (id) {
       updateMutation.mutate({ id, data });
     } else {
@@ -86,7 +86,7 @@ export function CampaignForm({ initialData, id }: { initialData?: any; id?: numb
                   if (checked) {
                     form.setValue('platforms', [...current, platform] as any, { shouldValidate: true });
                   } else {
-                    form.setValue('platforms', current.filter((p) => p !== platform) as any, { shouldValidate: true });
+                    form.setValue('platforms', current.filter((p: string) => p !== platform) as any, { shouldValidate: true });
                   }
                 }}
               />

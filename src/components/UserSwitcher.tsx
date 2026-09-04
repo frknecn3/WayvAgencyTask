@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export function UserSwitcher({ users, activeUserId }: { users: { id: number; email: string; role: string }[], activeUserId?: string }) {
   const [isPending, startTransition] = useTransition();
 
-  const handleUserChange = (userId: string) => {
+  const handleUserChange = (userId: string | null) => {
+    if (!userId) return;
     startTransition(() => {
       setUserAuthAction(userId).then(() => {
         window.location.reload();

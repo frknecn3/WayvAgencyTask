@@ -164,8 +164,8 @@ export default function AdminCampaignDetailPage() {
                   />
                   <Tooltip 
                     contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))' }}
-                    labelFormatter={(label) => new Date(label).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                    formatter={(value: number) => [value.toLocaleString(), 'Views']}
+                    labelFormatter={(label: any) => new Date(label).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                    formatter={(value: any) => [Number(value).toLocaleString(), 'Views']}
                   />
                   <Area 
                     type="monotone" 

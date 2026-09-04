@@ -22,7 +22,7 @@ export default function SubmitClipPage() {
     { enabled: !!campaignId }
   );
   
-  const form = useForm<SubmissionCreateInput>({
+  const form = useForm<any>({
     resolver: zodResolver(submissionCreateSchema),
     defaultValues: {
       campaign_id: campaignId,
@@ -41,7 +41,7 @@ export default function SubmitClipPage() {
     }
   });
 
-  const onSubmit = (data: SubmissionCreateInput) => {
+  const onSubmit = (data: any) => {
     createMutation.mutate(data);
   };
 
