@@ -1,5 +1,7 @@
 
-// tek atımlık pure function (girdigin kadarını verir, para kalmazsa parayı dizer)..
+// tek atımlı pure function (girdigin kadarını verir, para kalmazsa parayı dizer)..
+// ana para hasabı burada dönüyor. görüntülenmeye göre tam ne kadar ödeyeceğimizi hesaplıyoruz.
+// tamamen pure functin, yani bütçe yetmiyorsa direkt patlatıp false dönüyor, sürpriz yok.
 export function computePayout(
   views: number,
   ratePer1kCents: number,

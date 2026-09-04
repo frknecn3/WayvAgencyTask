@@ -129,11 +129,16 @@ export const submissionRouter = router({
       }));
     }),
 
+  // admin endpinti: içerik üreticisinin gönderisini onaylar.
+  // bu kısım çok kritik çünkü para mezvusu dönüyor. kampanyanın güncel harcamasını dinamik hesaplayıp,
+  // bu yeni onayın tolpam bütçeyi kesinlikle aşmayacağından emin oluyoruz.
   approve: adminProcedure
     .input(z.object({ submission_id: z.coerce.number().int(), campaign_id: z.coerce.number().int() }))
     .mutation(async ({ input }) => {
       return await db.transaction(async (tx) => {
-        // 1. Lock the campaign row
+        // 1. kampanya satırnı kilitliyoruz.
+        // select for update ile satırı fizksel olarak kilitliyoruz ki aynı anda gelen onay istekleri sıraya girsin.
+        // bylece aynı anda iki admin onay verirse bütçenin eksiye düşmesi (race condition) gibi saçmalıkları engelliyoruz.
         const [campaign] = await tx
           .select()
           .from(campaigns)
@@ -153,11 +158,13 @@ export const submissionRouter = router({
         const latestMetric = await getLatestMetric(tx, input.submission_id);
         const views = latestMetric?.views ?? 0;
 
-        // 4. Use the pure payout function
+        // 4. payut fonksiyonunu çağırıp bütçe kontrolü yapıyoruz.
+        // bu izlenmerin maliyeti kalan bütçeye uyuyor mu diye net bir hesap yapıyoruz.
         const ratePer1k = Number(campaign.payoutPer1kViews);
         const result = computePayout(views, ratePer1k, remainingBudget);
 
         if (!result.ok) {
+          // eger ok false dönerse, bu gönderinin maliyeti kalan bütçeyi matamatiksel olarak aşıyor demektir, direkt reddediyoruz.
           throw new TRPCError({
             code: 'PRECONDITION_FAILED',
             message: 'Approval would exceed campaign budget',

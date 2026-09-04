@@ -94,6 +94,8 @@ export const campaignRouter = router({
       return campaign;
     }),
 
+  // admin endpointi: yeni kapmanya oluşturur.
+  // toplam büçte ve bin izlenme başına ödeme gibi maddi kuralları ve tarih/platform detaylarını burada belirliyoruz.
   create: adminProcedure
     .input(campaignCreateSchema)
     .mutation(async ({ input }) => {
@@ -144,6 +146,8 @@ export const campaignRouter = router({
       return updatedCampaign;
     }),
 
+  // admin endpointi: beliri bir kampanyanın finansal istatistiklerini getirir.
+  // veritabandaki eski/bayat sütunlara güvenmek yerine harcanan bütçeyi ve toplam izlenmeyi anık olarak hesaplıyoruz.
   stats: adminProcedure
     .input(z.object({ campaign_id: z.coerce.number().int() }))
     .query(async ({ input }) => {
