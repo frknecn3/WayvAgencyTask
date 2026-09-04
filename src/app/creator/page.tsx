@@ -2,7 +2,7 @@
 
 import { trpc } from '@/trpc/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
 
 export default function CreatorDashboardPage() {
@@ -15,9 +15,12 @@ export default function CreatorDashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">Active Campaigns</h1>
           <p className="text-muted-foreground mt-1">Browse available campaigns and submit your clips to earn payouts.</p>
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/creator/submissions">My Submissions</Link>
-        </Button>
+        <Link 
+          href="/creator/submissions" 
+          className={buttonVariants({ variant: "outline" })}
+        >
+          My Submissions
+        </Link>
       </div>
 
       {isLoading ? (
@@ -43,11 +46,12 @@ export default function CreatorDashboardPage() {
                 <div className="text-sm text-muted-foreground font-medium">per 1,000 views</div>
               </CardContent>
               <CardFooter>
-                <Button className="w-full" asChild>
-                  <Link href={`/creator/campaigns/${campaign.id}/submit`}>
-                    Submit Clip
-                  </Link>
-                </Button>
+                <Link 
+                  href={`/creator/campaigns/${campaign.id}/submit`}
+                  className={buttonVariants({ className: "w-full" })}
+                >
+                  Submit Clip
+                </Link>
               </CardFooter>
             </Card>
           ))}

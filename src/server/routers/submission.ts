@@ -2,10 +2,54 @@ import { z } from 'zod';
 import { router, creatorProcedure, adminProcedure } from '../trpc';
 import { TRPCError } from '@trpc/server';
 import { db } from '@/db/index';
-import { campaigns, submissions, users } from '@/db/schema';
-import { eq, sql, and, asc } from 'drizzle-orm';
+import { campaigns, submissions, submissionMetrics, users } from '@/db/schema';
+import { eq, sql, and, asc, desc } from 'drizzle-orm';
 import { submissionCreateSchema } from '@/lib/schemas/submission';
 import { computePayout } from '@/lib/payout';
+
+async function computeCampaignSpend(tx: any, campaignId: number): Promise<number> {
+  const approvedSubmissions = await tx
+    .select({
+      id: submissions.id,
+      latestViews: sql<number>`(
+        SELECT views 
+        FROM submission_metric 
+        WHERE submission_id = ${submissions.id} 
+        ORDER BY captured_at DESC 
+        LIMIT 1
+      )`,
+      payoutPer1k: campaigns.payoutPer1kViews,
+    })
+    .from(submissions)
+    .innerJoin(campaigns, eq(submissions.campaignId, campaigns.id))
+    .where(
+      and(
+        eq(submissions.campaignId, campaignId),
+        eq(submissions.status, 'approved')
+      )
+    );
+
+  let currentSpend = 0;
+  for (const sub of approvedSubmissions) {
+    const views = sub.latestViews ?? 0;
+    const rate = Number(sub.payoutPer1k);
+    const payoutResult = computePayout(views, rate, Infinity);
+    if (payoutResult.ok) {
+      currentSpend += payoutResult.payoutCents;
+    }
+  }
+  return currentSpend;
+}
+
+async function getLatestMetric(tx: any, submissionId: number) {
+  const [metric] = await tx
+    .select({ views: submissionMetrics.views })
+    .from(submissionMetrics)
+    .where(eq(submissionMetrics.submissionId, submissionId))
+    .orderBy(desc(submissionMetrics.capturedAt))
+    .limit(1);
+  return metric;
+}
 
 export const submissionRouter = router({
   create: creatorProcedure
@@ -129,18 +173,59 @@ export const submissionRouter = router({
     }),
 
   approve: adminProcedure
-    .input(z.object({ id: z.number().int() }))
+    .input(z.object({ submission_id: z.coerce.number().int(), campaign_id: z.coerce.number().int() }))
     .mutation(async ({ input }) => {
-      const [submission] = await db
-        .update(submissions)
-        .set({ status: 'approved' })
-        .where(eq(submissions.id, input.id))
-        .returning();
-      
-      if (!submission) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Submission not found' });
-      }
-      return submission;
+      return await db.transaction(async (tx) => {
+        // 1. Lock the campaign row
+        const [campaign] = await tx
+          .select()
+          .from(campaigns)
+          .where(eq(campaigns.id, input.campaign_id))
+          .for('update');
+
+        if (!campaign || campaign.status !== 'active') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Campaign not active' });
+        }
+
+        // 2. Compute current spend across ALL approved submissions
+        const currentSpend = await computeCampaignSpend(tx, campaign.id);
+        const totalBudget = Number(campaign.totalBudget);
+        const remainingBudget = totalBudget - currentSpend;
+
+        // 3. Get the latest metric for THIS submission
+        const latestMetric = await getLatestMetric(tx, input.submission_id);
+        const views = latestMetric?.views ?? 0;
+
+        // 4. Use the pure payout function
+        const ratePer1k = Number(campaign.payoutPer1kViews);
+        const result = computePayout(views, ratePer1k, remainingBudget);
+
+        if (!result.ok) {
+          throw new TRPCError({
+            code: 'PRECONDITION_FAILED',
+            message: 'Approval would exceed campaign budget',
+          });
+        }
+
+        // 5. Approve the submission
+        const [submission] = await tx.update(submissions)
+          .set({ status: 'approved' })
+          .where(eq(submissions.id, input.submission_id))
+          .returning();
+
+        if (!submission) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Submission not found' });
+        }
+
+        // 6. Auto-complete if budget exhausted
+        if (result.exhaustsBudget) {
+          await tx.update(campaigns)
+            .set({ status: 'completed' })
+            .where(eq(campaigns.id, campaign.id));
+        }
+        
+        return submission;
+      });
     }),
 
   reject: adminProcedure

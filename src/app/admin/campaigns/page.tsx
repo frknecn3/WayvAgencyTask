@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { trpc } from '@/trpc/client';
 import { keepPreviousData } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
 import {
   Table,
@@ -130,11 +130,12 @@ export default function AdminCampaignsPage() {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/admin/campaigns/${campaign.id}/review`}>
-                        Review Queue
-                      </Link>
-                    </Button>
+                    <Link 
+                      href={`/admin/campaigns/${campaign.id}/review`}
+                      className={buttonVariants({ variant: "outline", size: "sm" })}
+                    >
+                      Review Queue
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))

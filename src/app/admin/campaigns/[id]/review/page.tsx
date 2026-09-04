@@ -82,7 +82,7 @@ export default function ReviewQueuePage() {
   };
 
   const handleApprove = (id: number) => {
-    approveMutation.mutate({ id });
+    approveMutation.mutate({ submission_id: id, campaign_id: campaignId });
   };
 
   const onSubmitReject = (data: RejectInput) => {
