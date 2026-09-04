@@ -23,8 +23,8 @@ describe('submission router - concurrent approvals', () => {
     const [campaign] = await db.insert(campaigns).values({
       title: 'Concurrency Test Campaign',
       platforms: ['tiktok'],
-      payoutPer1kViews: '300', // $step 3:00 (300 cents) per 1k views
-      totalBudget: '301',      // enough for 1 approval, but leaves 1 cent so it doesn't auto-complete
+      payoutPer1kViews: 300, // $step 3:00 (300 cents) per 1k views
+      totalBudget: 301,      // enough for 1 approval, but leaves 1 cent so it doesn't auto-complete
       status: 'active',
       startsAt: new Date(),
       endsAt: new Date(Date.now() + 86400000),

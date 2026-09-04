@@ -23,8 +23,8 @@ describe('Ingest Script Integration Tests', () => {
     const [campaign] = await db.insert(campaigns).values({
       title: 'Ingest Test Campaign',
       platforms: ['tiktok'],
-      payoutPer1kViews: '100',
-      totalBudget: '1000',
+      payoutPer1kViews: 100,
+      totalBudget: 1000,
       status: 'active',
       startsAt: new Date(),
       endsAt: new Date(Date.now() + 86400000),

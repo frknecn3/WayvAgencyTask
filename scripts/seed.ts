@@ -31,8 +31,8 @@ async function main() {
       {
         title: 'Summer Skincare Launch',
         platforms: ['tiktok', 'instagram'],
-        payoutPer1kViews: '15.00',
-        totalBudget: '10000.00',
+        payoutPer1kViews: 250,
+        totalBudget: 100000,
         status: 'active',
         startsAt: now,
         endsAt: nextMonth,
@@ -40,8 +40,8 @@ async function main() {
       {
         title: 'Winter Cozy Vibes',
         platforms: ['youtube'],
-        payoutPer1kViews: '20.00',
-        totalBudget: '5000.00',
+        payoutPer1kViews: 300,
+        totalBudget: 50000,
         status: 'draft',
         startsAt: nextMonth,
         endsAt: nextMonth,

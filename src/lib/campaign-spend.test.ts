@@ -17,8 +17,8 @@ describe('campaign-spend integration', () => {
       const [campaign] = await tx.insert(campaigns).values({
         title: 'Test Spend Campaign',
         platforms: ['tiktok'],
-        payoutPer1kViews: '500', // $5.00 (500 cents) per 1k views
-        totalBudget: '100000', // $1000.00
+        payoutPer1kViews: 500, // $5.00 (500 cents) per 1k views
+        totalBudget: 100000, // $1000.00
         status: 'active',
         startsAt: new Date(),
         endsAt: new Date(Date.now() + 86400000),
