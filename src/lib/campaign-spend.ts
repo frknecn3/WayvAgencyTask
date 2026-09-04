@@ -2,7 +2,7 @@ import { campaigns, submissions, submissionMetrics } from '@/db/schema';
 import { eq, sql, and, desc } from 'drizzle-orm';
 import { computePayout } from '@/lib/payout';
 
-export async function computeCampaignSpend(tx: any, campaignId: number): Promise<number> {
+export async function computeCampaignSpend(tx: any, campaignId: number): Promise<{ spend: number; views: number }> {
   const approvedSubmissions = await tx
     .select({
       id: submissions.id,
@@ -25,15 +25,17 @@ export async function computeCampaignSpend(tx: any, campaignId: number): Promise
     );
 
   let currentSpend = 0;
+  let totalViews = 0;
   for (const sub of approvedSubmissions) {
     const views = sub.latestViews ?? 0;
+    totalViews += views;
     const rate = Number(sub.payoutPer1k);
     const payoutResult = computePayout(views, rate, Infinity);
     if (payoutResult.ok) {
       currentSpend += payoutResult.payoutCents;
     }
   }
-  return currentSpend;
+  return { spend: currentSpend, views: totalViews };
 }
 
 export async function getLatestMetric(tx: any, submissionId: number) {

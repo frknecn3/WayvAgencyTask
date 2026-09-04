@@ -4,6 +4,7 @@ import { db } from '@/db/index';
 import { campaigns } from '@/db/schema';
 import { eq, ilike, and, count } from 'drizzle-orm';
 import { statusEnum, campaignCreateSchema, campaignUpdateSchema } from '@/lib/schemas/campaign';
+import { computeCampaignSpend } from '@/lib/campaign-spend';
 import { TRPCError } from '@trpc/server';
 
 export const campaignRouter = router({
@@ -141,5 +142,29 @@ export const campaignRouter = router({
       }
 
       return updatedCampaign;
+    }),
+
+  stats: adminProcedure
+    .input(z.object({ campaign_id: z.coerce.number().int() }))
+    .query(async ({ input }) => {
+      const [campaign] = await db
+        .select()
+        .from(campaigns)
+        .where(eq(campaigns.id, input.campaign_id))
+        .limit(1);
+
+      if (!campaign) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      }
+
+      const { spend: budgetSpent, views: totalApprovedViews } = await computeCampaignSpend(db, campaign.id);
+      const totalBudget = Number(campaign.totalBudget);
+      const budgetLeft = totalBudget - budgetSpent;
+
+      return {
+        totalApprovedViews,
+        budgetSpent,
+        budgetLeft,
+      };
     }),
 });

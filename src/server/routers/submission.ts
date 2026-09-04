@@ -145,7 +145,7 @@ export const submissionRouter = router({
         }
 
         // 2. Compute current spend across ALL approved submissions
-        const currentSpend = await computeCampaignSpend(tx, campaign.id);
+        const { spend: currentSpend } = await computeCampaignSpend(tx, campaign.id);
         const totalBudget = Number(campaign.totalBudget);
         const remainingBudget = totalBudget - currentSpend;
 

@@ -86,10 +86,11 @@ describe('campaign-spend integration', () => {
       });
 
       // 6. Compute spend!
-      const spend = await computeCampaignSpend(tx, campaign.id);
+      const { spend, views } = await computeCampaignSpend(tx, campaign.id);
       
       // Expected: subA (500 cents) + subB (1500 cents) = 2000 cents total
       expect(spend).toBe(2000);
+      expect(views).toBe(4700);
 
       // Rollback to keep DB clean
       tx.rollback();
