@@ -16,7 +16,7 @@ You might notice a few Turkish comments sprinkled around the codebase. I usually
 ## Concurrent Approvals
 Handling the campaign budget cap concurrently was definitely the trickiest part of the backend. I went with a strict Drizzle transaction using an explicit `SELECT ... FOR UPDATE` row lock on the `campaigns` table. 
 
-I chose this locking approach over a simple atomic update (like `UPDATE ... WHERE remaining_budget >= cost`) because the "remaining budget" isn't actually a hardcoded column in the database—it's a computed aggregate of all the approved submissions for that specific campaign. So, I had to physically lock the campaign row, calculate the total spend snapshot across all previously approved submissions right then and there, check if the *new* submission would push us over the budget, and if everything looks good, authorize it. 
+I chose this locking approach over a simple atomic update (like `UPDATE ... WHERE remaining_budget >= cost`) because the "remaining budget" isn't actually a hardcoded column in the database but it's a computed aggregate of all the approved submissions for that specific campaign. So, I had to physically lock the campaign row, calculate the total spend snapshot across all previously approved submissions right then and there, check if the *new* submission would push us over the budget, and if everything looks good, authorize it. 
 
 I thought about using advisory locks or pessimistic table locks at first, but locking at the row level with `FOR UPDATE` gives us bulletproof budget protection under high concurrency without accidentally blocking reads or updates to totally unrelated campaigns. The Vitest `Promise.allSettled` integration test I wrote proves this holds up under load.
 
