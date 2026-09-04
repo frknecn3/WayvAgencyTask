@@ -117,8 +117,8 @@ export default function AdminCampaignsPage() {
                 <TableRow key={campaign.id} className="transition-colors hover:bg-muted/50">
                   <TableCell className="font-medium">{campaign.title}</TableCell>
                   <TableCell className="capitalize">{campaign.platforms?.join(', ')}</TableCell>
-                  <TableCell>${(Number(campaign.payoutPer1kViews) / 100).toFixed(2)}</TableCell>
-                  <TableCell>${(Number(campaign.totalBudget) / 100).toFixed(2)}</TableCell>
+                  <TableCell>${(campaign.payoutPer1kViews / 100).toFixed(2)}</TableCell>
+                  <TableCell>${(campaign.totalBudget / 100).toFixed(2)}</TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
                       ${campaign.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : ''}

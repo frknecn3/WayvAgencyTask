@@ -151,7 +151,7 @@ export const submissionRouter = router({
 
         // 2. Compute current spend across ALL approved submissions
         const { spend: currentSpend } = await computeCampaignSpend(tx, campaign.id);
-        const totalBudget = Number(campaign.totalBudget);
+        const totalBudget = campaign.totalBudget;
         const remainingBudget = totalBudget - currentSpend;
 
         // 3. Get the latest metric for THIS submission
@@ -160,7 +160,7 @@ export const submissionRouter = router({
 
         // 4. payut fonksiyonunu çağırıp bütçe kontrolü yapıyoruz.
         // bu izlenmerin maliyeti kalan bütçeye uyuyor mu diye net bir hesap yapıyoruz.
-        const ratePer1k = Number(campaign.payoutPer1kViews);
+        const ratePer1k = campaign.payoutPer1kViews;
         const result = computePayout(views, ratePer1k, remainingBudget);
 
         if (!result.ok) {

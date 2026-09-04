@@ -104,8 +104,8 @@ export const campaignRouter = router({
         .values({
           title: input.title,
           platforms: input.platforms,
-          payoutPer1kViews: input.payout_per_1k_views.toString(),
-          totalBudget: input.total_budget.toString(),
+          payoutPer1kViews: input.payout_per_1k_views,
+          totalBudget: input.total_budget,
           status: input.status,
           startsAt: input.starts_at,
           endsAt: input.ends_at,
@@ -127,8 +127,8 @@ export const campaignRouter = router({
       
       if (input.data.title !== undefined) updateData.title = input.data.title;
       if (input.data.platforms !== undefined) updateData.platforms = input.data.platforms;
-      if (input.data.payout_per_1k_views !== undefined) updateData.payoutPer1kViews = input.data.payout_per_1k_views.toString();
-      if (input.data.total_budget !== undefined) updateData.totalBudget = input.data.total_budget.toString();
+      if (input.data.payout_per_1k_views !== undefined) updateData.payoutPer1kViews = input.data.payout_per_1k_views;
+      if (input.data.total_budget !== undefined) updateData.totalBudget = input.data.total_budget;
       if (input.data.status !== undefined) updateData.status = input.data.status;
       if (input.data.starts_at !== undefined) updateData.startsAt = input.data.starts_at;
       if (input.data.ends_at !== undefined) updateData.endsAt = input.data.ends_at;
@@ -162,7 +162,7 @@ export const campaignRouter = router({
       }
 
       const { spend: budgetSpent, views: totalApprovedViews } = await computeCampaignSpend(db, campaign.id);
-      const totalBudget = Number(campaign.totalBudget);
+      const totalBudget = campaign.totalBudget;
       const budgetLeft = totalBudget - budgetSpent;
 
       return {

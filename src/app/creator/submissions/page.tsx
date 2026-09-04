@@ -18,6 +18,8 @@ export default function MySubmissionsPage() {
     switch (status) {
       case 'approved':
         return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 border-green-200">Approved</Badge>;
+      case 'paid':
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200">Paid</Badge>;
       case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>;
       case 'pending':

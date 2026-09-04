@@ -31,7 +31,7 @@ export async function computeCampaignSpend(tx: any, campaignId: number): Promise
   for (const sub of approvedSubmissions) {
     const views = sub.latestViews ?? 0;
     totalViews += views;
-    const rate = Number(sub.payoutPer1k);
+    const rate = sub.payoutPer1k;
     // burada bütçe limtine infinity geçiyoruz çünkü sadece geçmişte onaylananların toplam maliyetini topluyoruz,
     // yani bu adımda yeni bir bütçe sinırı falan uygulamıyoruz.
     const payoutResult = computePayout(views, rate, Infinity);

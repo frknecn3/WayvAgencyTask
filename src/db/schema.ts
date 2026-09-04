@@ -2,7 +2,7 @@ import { pgTable, serial, text, timestamp, pgEnum, integer, numeric, date, uniqu
 
 export const userRoleEnum = pgEnum('user_role', ['admin', 'creator']);
 export const campaignStatusEnum = pgEnum('campaign_status', ['draft', 'active', 'paused', 'completed']);
-export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'approved', 'rejected']);
+export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'approved', 'rejected', 'paid']);
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -15,8 +15,8 @@ export const campaigns = pgTable('campaigns', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
   platforms: text('platforms').array().notNull(),
-  payoutPer1kViews: numeric('payout_per_1k_views', { precision: 10, scale: 2 }).notNull(),
-  totalBudget: numeric('total_budget', { precision: 10, scale: 2 }).notNull(),
+  payoutPer1kViews: integer('payout_per_1k_views').notNull(),
+  totalBudget: integer('total_budget').notNull(),
   status: campaignStatusEnum('status').default('draft').notNull(),
   startsAt: timestamp('starts_at').notNull(),
   endsAt: timestamp('ends_at').notNull(),
