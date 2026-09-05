@@ -3,15 +3,17 @@
 import { useTransition } from 'react';
 import { setUserAuthAction } from '@/app/actions/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useRouter } from 'next/navigation';
 
 export function UserSwitcher({ users, activeUserId }: { users: { id: number; email: string; role: string }[], activeUserId?: string }) {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleUserChange = (userId: string | null) => {
     if (!userId) return;
     startTransition(() => {
       setUserAuthAction(userId).then(() => {
-        window.location.href = '/';
+        router.refresh();
       });
     });
   };
